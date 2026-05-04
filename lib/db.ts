@@ -177,6 +177,32 @@ export async function insertComment(postId: string, c: Comment): Promise<void> {
   `;
 }
 
+export async function updatePost(id: string, fields: {
+  body?: string;
+  attribution?: string;
+  title?: string;
+  url?: string;
+  excerpt?: string;
+  source?: string;
+}): Promise<void> {
+  const sql = getSql();
+  await sql`
+    UPDATE posts SET
+      body = ${fields.body ?? null},
+      attribution = ${fields.attribution ?? null},
+      title = ${fields.title ?? null},
+      url = ${fields.url ?? null},
+      excerpt = ${fields.excerpt ?? null},
+      source = ${fields.source ?? null}
+    WHERE id = ${id}
+  `;
+}
+
+export async function updateComment(id: string, body: string): Promise<void> {
+  const sql = getSql();
+  await sql`UPDATE comments SET body = ${body} WHERE id = ${id}`;
+}
+
 export async function postsCount(): Promise<number> {
   const sql = getSql();
   const rows = await sql<{ n: number }[]>`SELECT COUNT(*)::int AS n FROM posts`;

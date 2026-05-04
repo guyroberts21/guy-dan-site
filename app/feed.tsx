@@ -95,6 +95,32 @@ export default function Feed({
     );
   }
 
+  async function editPost(postId: string, fields: Partial<Pick<Post, "body" | "attribution" | "title" | "url" | "excerpt" | "source">>) {
+    const res = await fetch(`/api/posts/${postId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+    if (!res.ok) throw new Error("Failed to edit post");
+    setPosts((cur) => cur.map((p) => p.id === postId ? { ...p, ...fields } : p));
+  }
+
+  async function editComment(postId: string, commentId: string, body: string) {
+    const res = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body }),
+    });
+    if (!res.ok) throw new Error("Failed to edit comment");
+    setPosts((cur) =>
+      cur.map((p) =>
+        p.id === postId
+          ? { ...p, comments: p.comments.map((c) => c.id === commentId ? { ...c, body } : c) }
+          : p
+      )
+    );
+  }
+
   async function saveChallenge(next: Challenge) {
     const res = await fetch("/api/challenge", {
       method: "PUT",
@@ -181,6 +207,8 @@ export default function Feed({
               post={p}
               currentUser={user}
               onAddComment={addComment}
+              onEditPost={editPost}
+              onEditComment={editComment}
               fmtTime={fmtTime}
             />
           ))}

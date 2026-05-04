@@ -96,7 +96,7 @@ export default function Composer({
       {type === "quote" && (
         <>
           <textarea placeholder={placeholders.quote} value={body} onChange={(e) => setBody(e.target.value)} />
-          <input className="text" placeholder="— attribution" value={attribution} onChange={(e) => setAttribution(e.target.value)} style={{ marginTop: 6 }} />
+          <input className="text" placeholder="attribution (e.g. — Author Name)" value={attribution} onChange={(e) => setAttribution(e.target.value)} style={{ marginTop: 6 }} />
         </>
       )}
 

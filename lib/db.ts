@@ -58,6 +58,15 @@ export async function ensureSchema() {
       body TEXT NOT NULL
     )
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id TEXT PRIMARY KEY,
+      author TEXT NOT NULL,
+      endpoint TEXT NOT NULL UNIQUE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL
+    )
+  `;
   await sql`CREATE INDEX IF NOT EXISTS posts_time_idx ON posts (time DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS comments_post_id_idx ON comments (post_id)`;
 }
@@ -175,6 +184,29 @@ export async function insertComment(postId: string, c: Comment): Promise<void> {
     INSERT INTO comments (id, post_id, author, time, body)
     VALUES (${c.id}, ${postId}, ${c.author}, ${c.time}, ${c.body})
   `;
+}
+
+type PushSubRow = { id: string; author: string; endpoint: string; p256dh: string; auth: string };
+
+export async function savePushSubscription(author: Author, sub: { endpoint: string; keys: { p256dh: string; auth: string } }): Promise<void> {
+  const sql = getSql();
+  const id = "ps" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  await sql`
+    INSERT INTO push_subscriptions (id, author, endpoint, p256dh, auth)
+    VALUES (${id}, ${author}, ${sub.endpoint}, ${sub.keys.p256dh}, ${sub.keys.auth})
+    ON CONFLICT (endpoint) DO UPDATE SET author = EXCLUDED.author, p256dh = EXCLUDED.p256dh, auth = EXCLUDED.auth
+  `;
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<void> {
+  const sql = getSql();
+  await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint}`;
+}
+
+export async function getPushSubscriptionsFor(author: Author): Promise<{ endpoint: string; keys: { p256dh: string; auth: string } }[]> {
+  const sql = getSql();
+  const rows = await sql<PushSubRow[]>`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE author = ${author}`;
+  return rows.map((r) => ({ endpoint: r.endpoint, keys: { p256dh: r.p256dh, auth: r.auth } }));
 }
 
 export async function updatePost(id: string, fields: {

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { ensureSchema, insertComment } from "@/lib/db";
+import { ensureSchema, insertComment, getPushSubscriptionsFor } from "@/lib/db";
+import { sendPushToSubscriptions } from "@/lib/webpush";
+import { BROTHERS } from "@/lib/types";
 import type { Author, Comment } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -29,5 +31,10 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Post not found." }, { status: 404 });
   }
+
+  const otherAuthor: Author = author === "guy" ? "dan" : "guy";
+  const subs = await getPushSubscriptionsFor(otherAuthor);
+  await sendPushToSubscriptions(subs, { title: `${BROTHERS[author].name} replied`, body: c.body.slice(0, 100) });
+
   return NextResponse.json({ comment: c });
 }

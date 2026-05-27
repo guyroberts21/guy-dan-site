@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { ensureSchema, insertPost, listPosts } from "@/lib/db";
+import { ensureSchema, insertPost, listPosts, getPushSubscriptionsFor } from "@/lib/db";
+import { sendPushToSubscriptions } from "@/lib/webpush";
+import { BROTHERS } from "@/lib/types";
 import type { Author, Post, PostType } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -46,5 +48,14 @@ export async function POST(req: Request) {
     comments: [],
   };
   await insertPost(post);
+
+  const otherAuthor: Author = author === "guy" ? "dan" : "guy";
+  const subs = await getPushSubscriptionsFor(otherAuthor);
+  const notifBody =
+    type === "quote" ? `"${post.body?.slice(0, 80)}"` :
+    type === "link" ? (post.title ?? "a new link") :
+    (post.body?.slice(0, 100) ?? "");
+  await sendPushToSubscriptions(subs, { title: `${BROTHERS[author].name} posted`, body: notifBody });
+
   return NextResponse.json({ post });
 }

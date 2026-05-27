@@ -7,6 +7,7 @@ import Composer from "./composer";
 import PostView from "./post";
 import ChallengeBox from "./challenge-box";
 import TweaksPanel, { applyTweaks, type Tweaks, DEFAULT_TWEAKS } from "./tweaks-panel";
+import NotificationButton from "./notification-button";
 
 function Avatar({ who }: { who: Author }) {
   return <span className={"ava " + who}>{BROTHERS[who].initial}</span>;
@@ -141,6 +142,7 @@ export default function Feed({
       <div className="top">
         <div className="brand">Guy <em>&</em> Dan</div>
         <div className="top-right">
+          <NotificationButton currentUser={user} />
           <button className="pill" onClick={switchUser} title="Click to switch">
             <Avatar who={user} />
             {BROTHERS[user].name}
